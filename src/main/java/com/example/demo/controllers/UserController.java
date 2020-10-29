@@ -25,14 +25,15 @@ import com.example.demo.model.requests.CreateUserRequest;
 @RequestMapping("/api/user")
 public class UserController {
 	
-	@Autowired
-	private UserRepository userRepository;
-	
-	@Autowired
-	private CartRepository cartRepository;
+	private final UserRepository userRepository;
+	private final CartRepository cartRepository;
+	private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-	@Autowired
-	private BCryptPasswordEncoder bCryptPasswordEncoder;
+	public UserController(UserRepository userRepository, CartRepository cartRepository) {
+		this.userRepository = userRepository;
+		this.cartRepository = cartRepository;
+		this.bCryptPasswordEncoder = new BCryptPasswordEncoder();
+	}
 
 	private static final Logger logger = LoggerFactory.getLogger("eCommerce");
 
