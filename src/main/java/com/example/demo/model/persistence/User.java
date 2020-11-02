@@ -33,7 +33,6 @@ public class User {
 
 	@OneToOne(cascade = CascadeType.ALL)
 	@JoinColumn(name = "cart_id", referencedColumnName = "id")
-	@JsonIgnore
     private Cart cart;
 
 	public Cart getCart() {
