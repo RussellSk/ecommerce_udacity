@@ -13,7 +13,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collections;
+import java.util.ArrayList;
+
+import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
 
 @Component
 public class BasicAuthFilter extends BasicAuthenticationFilter {
@@ -23,26 +25,24 @@ public class BasicAuthFilter extends BasicAuthenticationFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        String header = request.getHeader("Authorization");
-        if (header != null || header.startsWith("Bearer ")) {
-            UsernamePasswordAuthenticationToken authentication = getAuthentication(request);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        String headerToken = request.getHeader("Authorization");
+        if (headerToken == null || !headerToken.startsWith("Bearer ")) {
+            chain.doFilter(request, response);
+            return;
         }
+
+        UsernamePasswordAuthenticationToken authentication = getAuthentication(headerToken, request);
+        SecurityContextHolder.getContext().setAuthentication(authentication);
         chain.doFilter(request, response);
     }
 
-    private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
-        String token = request.getHeader("Authorization");
+    private UsernamePasswordAuthenticationToken getAuthentication(String token, HttpServletRequest req) {
         if (token != null) {
-            String user = JWT.require(Algorithm.HMAC512(WebSecurityConfiguration.SECRET_KEY.getBytes()))
-                    .build()
+            String user = JWT.require(HMAC512(WebSecurityConfiguration.SECRET_KEY.getBytes())).build()
                     .verify(token.replace("Bearer ", ""))
                     .getSubject();
-            if (user != null) {
-                return new UsernamePasswordAuthenticationToken(user, null, Collections.emptyList());
-            }
+            if (user != null) return new UsernamePasswordAuthenticationToken(user, null, new ArrayList<>());
         }
-
         return null;
     }
 }

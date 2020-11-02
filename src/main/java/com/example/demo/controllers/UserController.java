@@ -50,30 +50,35 @@ public class UserController {
 	
 	@PostMapping("/create")
 	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
-		logger.info("Begin creating User {}", createUserRequest.getUsername());
+		try {
+			logger.info("Begin creating User {}", createUserRequest.getUsername());
 
-		String password = createUserRequest.getPassword();
+			String password = createUserRequest.getPassword();
 
-		if (password == null) {
-			logger.error("Password is empty");
+			if (password == null) {
+				logger.error("Password is empty");
+				return ResponseEntity.badRequest().build();
+			}
+
+			if (password.length() < 8 || !password.equals(createUserRequest.getConfirmPassword())) {
+				logger.error("Password can not be less than 8 character also confirm password must be the same");
+				return ResponseEntity.badRequest().build();
+			}
+
+			User user = new User();
+			user.setUsername(createUserRequest.getUsername());
+			Cart cart = new Cart();
+			cartRepository.save(cart);
+			user.setCart(cart);
+			user.setPassword(bCryptPasswordEncoder.encode(password));
+			userRepository.save(user);
+
+			logger.info("User successfully created");
+			return ResponseEntity.ok(user);
+		} catch (Exception exception) {
+			logger.error("ERROR: " + exception.getMessage());
 			return ResponseEntity.badRequest().build();
 		}
-
-		if (password.length() < 8 || !password.equals(createUserRequest.getConfirmPassword())) {
-			logger.error("Password can not be less than 8 character also confirm password must be the same");
-			return ResponseEntity.badRequest().build();
-		}
-
-		User user = new User();
-		user.setUsername(createUserRequest.getUsername());
-		Cart cart = new Cart();
-		cartRepository.save(cart);
-		user.setCart(cart);
-		user.setPassword(bCryptPasswordEncoder.encode(password));
-		userRepository.save(user);
-
-		logger.info("User successfully created");
-		return ResponseEntity.ok(user);
 	}
 	
 }

@@ -33,26 +33,36 @@ public class OrderController {
 
 	@PostMapping("/submit/{username}")
 	public ResponseEntity<UserOrder> submit(@PathVariable String username) {
-		User user = userRepository.findByUsername(username);
-		logger.info("Submitting order");
+		try {
+			User user = userRepository.findByUsername(username);
+			logger.info("Submitting order");
 
-		if(user == null) {
-			logger.error("User not found");
-			return ResponseEntity.notFound().build();
+			if (user == null) {
+				logger.error("User not found");
+				return ResponseEntity.notFound().build();
+			}
+			UserOrder order = UserOrder.createFromCart(user.getCart());
+			orderRepository.save(order);
+
+			logger.info("Order submitted successfully");
+			return ResponseEntity.ok(order);
+		} catch (Exception exception) {
+			logger.error("ERROR: " + exception.getMessage());
+			return ResponseEntity.badRequest().build();
 		}
-		UserOrder order = UserOrder.createFromCart(user.getCart());
-		orderRepository.save(order);
-
-		logger.info("Order submitted successfully");
-		return ResponseEntity.ok(order);
 	}
 	
 	@GetMapping("/history/{username}")
 	public ResponseEntity<List<UserOrder>> getOrdersForUser(@PathVariable String username) {
-		User user = userRepository.findByUsername(username);
-		if(user == null) {
-			return ResponseEntity.notFound().build();
+		try {
+			User user = userRepository.findByUsername(username);
+			if (user == null) {
+				return ResponseEntity.notFound().build();
+			}
+			return ResponseEntity.ok(orderRepository.findByUser(user));
+		} catch (Exception exception) {
+			logger.error("ERROR: " + exception.getMessage());
+			return ResponseEntity.badRequest().build();
 		}
-		return ResponseEntity.ok(orderRepository.findByUser(user));
 	}
 }
